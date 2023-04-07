@@ -18,10 +18,50 @@ TOTAL_TRIES = 0
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pattern Identifier")
 
+# The purpose of this is generating all possible outcomes of the pattern for a given number. <start>
+
+
+def select_non_repetitive(possibs, sample):
+    different_values = len(set(sample))
+    if different_values == len(sample):
+        possibs.append(tuple(sample))
+
+
+def generator(length):
+    sample = [1 for i in range(length)]
+    possibs = []
+    all_nine = False
+    while not all_nine:
+        for i in range(length):
+            next_index = i+1
+            rest_values = sample[next_index:]
+            if next_index == length:
+                sample[i] += 1
+                select_non_repetitive(possibs, sample)
+            elif len(set(rest_values)) == 1 and rest_values[0] == 9:
+                sample[next_index] = 0
+                sample[i] += 1
+                select_non_repetitive(possibs, sample)
+            else:
+                pass
+
+        # All nine validator
+        if len(set(sample)) == 1 and sample[0] == 9:
+            all_nine = True
+    return possibs
+# <end>
+
 
 def generate_the_answer():
     # Run only if SET_UP_MODE is False and len(CLICKED DOTS) > 0
-    pass
+    length = 0
+    answer_found = False
+    while not answer_found:
+        length += 1
+        possibs = generator(length)
+        for possib in possibs:
+            if possib == tuple(CLICKED_DOTS):
+                answer_found = True
 
 
 def generate_dot_set(win):
