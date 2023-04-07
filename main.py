@@ -9,12 +9,19 @@ FPS = 30
 WHITE = (225, 225, 225)
 BLACK = (0, 0, 0)
 BUTTON_RADIUS = 25
-SET_UP_MODE = False
 CLICKED_DOTS = []
+SET_UP_MODE = False
+TRYING_MODE = False
+TOTAL_TRIES = 0
 
 # Display Setup
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pattern Identifier")
+
+
+def generate_the_answer():
+    # Run only if SET_UP_MODE is False and len(CLICKED DOTS) > 0
+    pass
 
 
 def generate_dot_set(win):
