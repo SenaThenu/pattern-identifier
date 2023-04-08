@@ -8,6 +8,7 @@ WIDTH, HEIGHT = 600, 600
 FPS = 30
 WHITE = (225, 225, 225)
 BLACK = (0, 0, 0)
+RED = (225, 0, 0)
 BUTTON_RADIUS = 25
 CLICKED_DOTS = []
 SET_UP_MODE = False
@@ -90,7 +91,8 @@ def check_dot_click(mouse_pos, dot_cors):
 
 
 def create_clicked_dots(pressed):
-    CLICKED_DOTS.append(int(pressed))
+    if int(pressed) not in CLICKED_DOTS:
+        CLICKED_DOTS.append(int(pressed))
 
 
 # n means the position of the button from the left...
@@ -136,9 +138,7 @@ def perform_button_funcs(button_status):
 
 def check_button_click(button_props, mouse_pos):
     """Checks whether a particular button is clicked or not and if clicked, performs what it does."""
-    button_status = {
-
-    }
+    button_status = {}
     if mouse_pos != None:
         for i, button in enumerate(button_props):
             button_x, button_y, button_width, button_height = button
@@ -150,6 +150,15 @@ def check_button_click(button_props, mouse_pos):
     perform_button_funcs(button_status)
 
 
+def connect_dots(dot_cors):
+    """This connects the clicked dots with lines"""
+    for i, dot in enumerate(CLICKED_DOTS):
+        if (i+1) != len(CLICKED_DOTS):
+            nxt_dot_cor_index = CLICKED_DOTS[i+1] - 1
+            pygame.draw.line(
+                WIN, RED, dot_cors[(dot-1)], dot_cors[nxt_dot_cor_index], 10)
+
+
 def draw(WIN, mouse_pos):
     WIN.fill(WHITE)
 
@@ -159,6 +168,7 @@ def draw(WIN, mouse_pos):
         clicked_dot = check_dot_click(mouse_pos, dot_cors)
         if clicked_dot != None:
             create_clicked_dots(clicked_dot)
+    connect_dots(dot_cors)
 
     # Setting up buttons and tracking button clicks
     button_props = set_up_buttons()
