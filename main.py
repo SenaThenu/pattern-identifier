@@ -15,10 +15,10 @@ TRYING_MODE = False
 TOTAL_TRIES = 0
 
 # Display Setup
-win = pygame.display.set_mode((WIDTH, HEIGHT))
+WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pattern Identifier")
 
-# The purpose of this is generating all possible outcomes of the pattern for a given number. <start>
+# The purpose of this is generating all possible outcomes of the pattern for a given length. <start>
 
 
 def select_non_repetitive(possibs, sample):
@@ -39,7 +39,7 @@ def generator(length):
                 sample[i] += 1
                 select_non_repetitive(possibs, sample)
             elif len(set(rest_values)) == 1 and rest_values[0] == 9:
-                sample[next_index] = 0
+                sample[next_index] = 1
                 sample[i] += 1
                 select_non_repetitive(possibs, sample)
             else:
@@ -64,7 +64,7 @@ def generate_the_answer():
                 answer_found = True
 
 
-def generate_dot_set(win):
+def generate_dot_set(WIN):
     dot_cors = []
     # Repeating through the 1/4s horizontally...
     for i in range(1, 4):
@@ -72,7 +72,7 @@ def generate_dot_set(win):
         # Repeating through the 1/4s vertically...
         for x in range(1, 4):
             cir_x = WIDTH * (x/4)
-            pygame.draw.circle(win, BLACK, (cir_x, cir_y), BUTTON_RADIUS)
+            pygame.draw.circle(WIN, BLACK, (cir_x, cir_y), BUTTON_RADIUS)
             dot_cors.append([cir_x, cir_y])
     return dot_cors
 
@@ -90,23 +90,36 @@ def create_clicked_dots(pressed):
     CLICKED_DOTS.append(int(pressed))
 
 
-def set_up_buttons():
-    # Setting up the set-up button which lets the user to enter a new pattern
-    set_up_button = pygame.image.load(join('assets', 'Setup_Button.png'))
-    set_up_x, set_up_y = WIDTH-set_up_button.get_width(), HEIGHT - \
-        set_up_button.get_height()
-    win.blit(set_up_button, (set_up_x, set_up_y))
+# n means the position of the button from the left...
+def button_prop_setter(button_name, n, button_width=144, button_gap=10):
+    """This sets up the properties for a specific button, given its position from left. Afterwards, it blits it on to the screen."""
+    button_width += button_gap
+    but_img = pygame.image.load(
+        join("assets", "Buttons", f"{button_name}.png"))
+    but_x, but_y = WIDTH-(n * button_width), HEIGHT-but_img.get_height()
+    WIN.blit(but_img, ((but_x), but_y))
+    return [but_x, but_y, but_img.get_width(), but_img.get_height()]
 
-    button_props = [[set_up_x, set_up_y, set_up_button.get_width(),
-                     set_up_button.get_height()]]
-    # Here, button_props's index is used as the index keyword of the button_status dictionary
-    return button_props
+
+def set_up_buttons():
+    """This is where the buttons are mended and a list of button properties is returned!"""
+
+    # This is the list for buttons containing global indexes. (Used in performing button funcs)
+    buttons = ["Setup_Button", "AI_Button"]
+    button_prop_list = []
+
+    for i, button in enumerate(buttons):
+        props = button_prop_setter(button, (i+1))
+        button_prop_list.append(props)
+    return button_prop_list
 
 
 def perform_button_funcs(button_status):
+    """Makes the button perform its function"""
     # button = 0; set-up-button
     for button in button_status:
         if button_status.get(button) and button == 0:
+            print("Settin Up!")
             global SET_UP_MODE, CLICKED_DOTS
             if SET_UP_MODE:
                 SET_UP_MODE = False
@@ -116,6 +129,7 @@ def perform_button_funcs(button_status):
 
 
 def check_button_click(button_props, mouse_pos):
+    """Checks whether a particular button is clicked or not and if clicked, performs what it does."""
     button_status = {
 
     }
@@ -130,11 +144,11 @@ def check_button_click(button_props, mouse_pos):
     perform_button_funcs(button_status)
 
 
-def draw(win, mouse_pos):
-    win.fill(WHITE)
+def draw(WIN, mouse_pos):
+    WIN.fill(WHITE)
 
     # Setting up dots and tracking dot clicks
-    dot_cors = generate_dot_set(win)
+    dot_cors = generate_dot_set(WIN)
     if SET_UP_MODE:
         clicked_dot = check_dot_click(mouse_pos, dot_cors)
         if clicked_dot != None:
@@ -157,7 +171,7 @@ def main():
                 run = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
-        draw(win, mouse_pos)
+        draw(WIN, mouse_pos)
 
 
 if __name__ == "__main__":
