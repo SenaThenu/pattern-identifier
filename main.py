@@ -53,15 +53,18 @@ def generator(length):
 
 
 def generate_the_answer():
-    # Run only if SET_UP_MODE is False and len(CLICKED DOTS) > 0
+    """This generates the correct pattern number sequence and returns it!"""
     length = 0
     answer_found = False
+    answer = None
     while not answer_found:
         length += 1
         possibs = generator(length)
         for possib in possibs:
             if possib == tuple(CLICKED_DOTS):
+                answer = possib
                 answer_found = True
+    return answer
 
 
 def generate_dot_set(WIN):
@@ -116,16 +119,19 @@ def set_up_buttons():
 
 def perform_button_funcs(button_status):
     """Makes the button perform its function"""
-    # button = 0; set-up-button
+    # 0 = Set up button, 1 = AI button (because the status dictionary is set up according to global indices.)
     for button in button_status:
         if button_status.get(button) and button == 0:
-            print("Settin Up!")
             global SET_UP_MODE, CLICKED_DOTS
             if SET_UP_MODE:
                 SET_UP_MODE = False
             else:
                 CLICKED_DOTS = []
                 SET_UP_MODE = True
+            break        # Disabling the AI mode!
+        elif button_status.get(button) and button == 1:
+            if not SET_UP_MODE and len(CLICKED_DOTS) > 0:
+                answer = generate_the_answer()
 
 
 def check_button_click(button_props, mouse_pos):
