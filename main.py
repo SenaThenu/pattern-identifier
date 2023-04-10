@@ -9,10 +9,11 @@ FPS = 30
 WHITE = (225, 225, 225)
 BLACK = (0, 0, 0)
 RED = (225, 0, 0)
+BLUE = (0, 0, 225)
 BUTTON_RADIUS = 25
 CLICKED_DOTS = []
 SET_UP_MODE = False
-TRYING_MODE = False
+AI_MODE = False
 TOTAL_TRIES = 0
 
 # Display Setup
@@ -40,7 +41,9 @@ def generator(length):
                 sample[i] += 1
                 select_non_repetitive(possibs, sample)
             elif len(set(rest_values)) == 1 and rest_values[0] == 9:
-                sample[next_index] = 1
+                for x in range(len(sample)):
+                    if x >= next_index:
+                        sample[x] = 1
                 sample[i] += 1
                 select_non_repetitive(possibs, sample)
             else:
@@ -59,12 +62,18 @@ def generate_the_answer():
     answer_found = False
     answer = None
     while not answer_found:
+        global AI_MODE
         length += 1
         possibs = generator(length)
         for possib in possibs:
             if possib == tuple(CLICKED_DOTS):
                 answer = possib
                 answer_found = True
+                AI_MODE = False
+                ai_draw(possib, wait=True)
+                break
+            else:
+                ai_draw(possib, wait=False)
     return answer
 
 
@@ -79,6 +88,19 @@ def generate_dot_set(WIN):
             pygame.draw.circle(WIN, BLACK, (cir_x, cir_y), BUTTON_RADIUS)
             dot_cors.append([cir_x, cir_y])
     return dot_cors
+
+
+def ai_draw(ai_answer, wait):
+    WIN.fill(WHITE)
+
+    # Setting up dots and tracking dot clicks
+    dot_cors = generate_dot_set(WIN)
+
+    connect_dots(dot_cors, ai_answer, BLUE)
+
+    pygame.display.update()
+    if wait:
+        pygame.time.delay(1000)
 
 
 def check_dot_click(mouse_pos, dot_cors):
@@ -132,8 +154,13 @@ def perform_button_funcs(button_status):
                 SET_UP_MODE = True
             break        # Disabling the AI mode!
         elif button_status.get(button) and button == 1:
-            if not SET_UP_MODE and len(CLICKED_DOTS) > 0:
-                answer = generate_the_answer()
+            global AI_MODE
+            if not AI_MODE:
+                if not SET_UP_MODE and len(CLICKED_DOTS) > 0:
+                    answer = generate_the_answer()
+
+            else:
+                AI_MODE = False
 
 
 def check_button_click(button_props, mouse_pos):
@@ -150,13 +177,13 @@ def check_button_click(button_props, mouse_pos):
     perform_button_funcs(button_status)
 
 
-def connect_dots(dot_cors):
+def connect_dots(dot_cors, dot_sequence, color):
     """This connects the clicked dots with lines"""
-    for i, dot in enumerate(CLICKED_DOTS):
-        if (i+1) != len(CLICKED_DOTS):
-            nxt_dot_cor_index = CLICKED_DOTS[i+1] - 1
+    for i, dot in enumerate(dot_sequence):
+        if (i+1) != len(dot_sequence):
+            nxt_dot_cor_index = dot_sequence[i+1] - 1
             pygame.draw.line(
-                WIN, RED, dot_cors[(dot-1)], dot_cors[nxt_dot_cor_index], 10)
+                WIN, color, dot_cors[(dot-1)], dot_cors[nxt_dot_cor_index], 10)
 
 
 def draw(WIN, mouse_pos):
@@ -168,7 +195,7 @@ def draw(WIN, mouse_pos):
         clicked_dot = check_dot_click(mouse_pos, dot_cors)
         if clicked_dot != None:
             create_clicked_dots(clicked_dot)
-    connect_dots(dot_cors)
+    connect_dots(dot_cors, CLICKED_DOTS, RED)
 
     # Setting up buttons and tracking button clicks
     button_props = set_up_buttons()
@@ -187,7 +214,8 @@ def main():
                 run = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
-        draw(WIN, mouse_pos)
+        if not AI_MODE:
+            draw(WIN, mouse_pos)
 
 
 if __name__ == "__main__":
