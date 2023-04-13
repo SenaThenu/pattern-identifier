@@ -1,20 +1,24 @@
 import pygame
 import math
+import ctypes
 from os.path import join
 pygame.init()
 
 # Static Game Variables
 WIDTH, HEIGHT = 600, 600
 FPS = 30
-WHITE = (225, 225, 225)
+WHITE = (174, 253, 202)
 BLACK = (0, 0, 0)
-RED = (225, 0, 0)
-BLUE = (0, 0, 225)
+MANU_COLOUR = (9, 189, 57)    # Color used to connect the user's dots
+AI_COLOUR = (2, 121, 212)     # Color used to connect AI connected dots color
 BUTTON_RADIUS = 25
 CLICKED_DOTS = []
+PREV_DOTS = []
+
 SET_UP_MODE = False
 AI_MODE = False
-TOTAL_TRIES = 0
+
+BG = pygame.image.load(join("assets", "bg.png"))
 
 # Display Setup
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -60,21 +64,18 @@ def generate_the_answer():
     """This generates the correct pattern number sequence and returns it!"""
     length = 0
     answer_found = False
-    answer = None
     while not answer_found:
         global AI_MODE
         length += 1
         possibs = generator(length)
         for possib in possibs:
             if possib == tuple(CLICKED_DOTS):
-                answer = possib
                 answer_found = True
                 AI_MODE = False
                 ai_draw(possib, wait=True)
                 break
             else:
                 ai_draw(possib, wait=False)
-    return answer
 
 
 def generate_dot_set(WIN):
@@ -85,18 +86,18 @@ def generate_dot_set(WIN):
         # Repeating through the 1/4s vertically...
         for x in range(1, 4):
             cir_x = WIDTH * (x/4)
-            pygame.draw.circle(WIN, BLACK, (cir_x, cir_y), BUTTON_RADIUS)
+            pygame.draw.circle(WIN, WHITE, (cir_x, cir_y), BUTTON_RADIUS)
             dot_cors.append([cir_x, cir_y])
     return dot_cors
 
 
 def ai_draw(ai_answer, wait):
-    WIN.fill(WHITE)
+    WIN.blit(BG, (0, 0))
 
     # Setting up dots and tracking dot clicks
     dot_cors = generate_dot_set(WIN)
 
-    connect_dots(dot_cors, ai_answer, BLUE)
+    connect_dots(dot_cors, ai_answer, AI_COLOUR)
 
     pygame.display.update()
     if wait:
@@ -132,7 +133,10 @@ def set_up_buttons():
     """This is where the buttons are mended and a list of button properties is returned!"""
 
     # This is the list for buttons containing global indexes. (Used in performing button funcs)
-    buttons = ["Setup_Button", "AI_Button"]
+    if SET_UP_MODE:
+        buttons = ["Done", "Cancel"]
+    else:
+        buttons = ["Setup_Button", "AI_Button"]
     button_prop_list = []
 
     for i, button in enumerate(buttons):
@@ -143,24 +147,30 @@ def set_up_buttons():
 
 def perform_button_funcs(button_status):
     """Makes the button perform its function"""
-    # 0 = Set up button, 1 = AI button (because the status dictionary is set up according to global indices.)
-    for button in button_status:
-        if button_status.get(button) and button == 0:
-            global SET_UP_MODE, CLICKED_DOTS
-            if SET_UP_MODE:
-                SET_UP_MODE = False
-            else:
-                CLICKED_DOTS = []
-                SET_UP_MODE = True
-            break        # Disabling the AI mode!
-        elif button_status.get(button) and button == 1:
-            global AI_MODE
-            if not AI_MODE:
-                if not SET_UP_MODE and len(CLICKED_DOTS) > 0:
-                    answer = generate_the_answer()
 
-            else:
-                AI_MODE = False
+    for button in button_status:
+        global SET_UP_MODE, CLICKED_DOTS, PREV_DOTS
+        if not SET_UP_MODE:
+            # 0 = Set up button, 1 = AI button (because the status dictionary is set up according to global indices.)
+            if button_status.get(button) and button == 0:
+                SET_UP_MODE = True
+                PREV_DOTS = CLICKED_DOTS
+                CLICKED_DOTS = []
+            elif button_status.get(button) and button == 1:
+                global AI_MODE
+                if not AI_MODE:
+                    if len(CLICKED_DOTS) > 0:
+                        generate_the_answer()
+                    else:
+                        ctypes.windll.user32.MessageBoxW(
+                            0, 'Set a pattern before running the identifier!', 'No Pattern Error', 48)
+        else:
+            # 0 = Done, 1 = Cancel
+            if button_status.get(button) and button == 0:
+                SET_UP_MODE = False
+            elif button_status.get(button) and button == 1:
+                CLICKED_DOTS = PREV_DOTS
+                SET_UP_MODE = False
 
 
 def check_button_click(button_props, mouse_pos):
@@ -187,15 +197,16 @@ def connect_dots(dot_cors, dot_sequence, color):
 
 
 def draw(WIN, mouse_pos):
-    WIN.fill(WHITE)
+    WIN.blit(BG, (0, 0))
 
     # Setting up dots and tracking dot clicks
     dot_cors = generate_dot_set(WIN)
     if SET_UP_MODE:
+        global PREV_DOTS
         clicked_dot = check_dot_click(mouse_pos, dot_cors)
         if clicked_dot != None:
             create_clicked_dots(clicked_dot)
-    connect_dots(dot_cors, CLICKED_DOTS, RED)
+    connect_dots(dot_cors, CLICKED_DOTS, MANU_COLOUR)
 
     # Setting up buttons and tracking button clicks
     button_props = set_up_buttons()
@@ -214,8 +225,7 @@ def main():
                 run = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
-        if not AI_MODE:
-            draw(WIN, mouse_pos)
+        draw(WIN, mouse_pos)
 
 
 if __name__ == "__main__":
